@@ -13,11 +13,11 @@ make sense.
 
 ### Concealment ciphers
 
-- [] Word Alignment 
-- [] Bacons Bilateral Cipher
-- [] Tri-numeral alphabets
-    - [] # of syllabes per word
-    - [] # vowels/uppercase/other per word
+- [ ] Word Alignment 
+- [ ] Bacons Bilateral Cipher
+- [ ] Tri-numeral alphabets
+    - [ ] # of syllabes per word
+    - [ ] # vowels/uppercase/other per word
 
 ### Transposition ciphers
 
@@ -25,17 +25,17 @@ make sense.
 
 #### Columnar Transposition
 
-- [] Magic Square
-- [] Knights Tour
-- [] Route transposition
-    - [] Vertical
-    - [] Horizontal
-    - [] Diagonal
-- [] Rail Fence 
-- [] Double transposition 
-- [] Grille transposition
-- [] Route cipher (words)
+- [ ] Magic Square
+- [ ] Knights Tour
+- [ ] Route transposition
+    - [ ] Vertical
+    - [ ] Horizontal
+    - [ ] Diagonal
+- [ ] Rail Fence 
+- [ ] Double transposition 
+- [ ] Grille transposition
+- [ ] Route cipher (words)
 
 #### Geometric Transposition
 
-- []
+- [ ]
