@@ -19,14 +19,12 @@ package cmd
 import (
 	"fmt"
 
-	log "github.com/Sirupsen/logrus"
-	"github.com/icot/clciph/tools"
 	"github.com/spf13/cobra"
 )
 
-// analyzeCmd represents the analyze command
-var analyzeCmd = &cobra.Command{
-	Use:   "analyze",
+// substitutorCmd represents the substitutor command
+var substitutorCmd = &cobra.Command{
+	Use:   "substitutor",
 	Short: "A brief description of your command",
 	Long: `A longer description that spans multiple lines and likely contains examples
 and usage of using your command. For example:
@@ -34,27 +32,21 @@ and usage of using your command. For example:
 Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
+	Run: func(cmd *cobra.Command, args []string) {
+		fmt.Println("substitutor called")
+	},
 }
 
 func init() {
-	rootCmd.AddCommand(analyzeCmd)
-	analyzeCmd.Run = analyze
+	rootCmd.AddCommand(substitutorCmd)
 
 	// Here you will define your flags and configuration settings.
 
 	// Cobra supports Persistent Flags which will work for this command
 	// and all subcommands, e.g.:
-	// analyzeCmd.PersistentFlags().String("foo", "", "A help for foo")
+	// substitutorCmd.PersistentFlags().String("foo", "", "A help for foo")
 
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
-	// analyzeCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
-}
-
-func analyze(cmd *cobra.Command, args []string) {
-	fmt.Println("analyze called with arg: ", args[0])
-	log.Debug("inside analyze")
-	buf := file.Load(args[0])
-	log.Debug(string(buf))
-
+	// substitutorCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
