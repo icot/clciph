@@ -17,8 +17,9 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package cmd
 
 import (
-	"fmt"
-
+	log "github.com/Sirupsen/logrus"
+	ui "github.com/gizak/termui/v3"
+	"github.com/gizak/termui/v3/widgets"
 	"github.com/spf13/cobra"
 )
 
@@ -32,13 +33,32 @@ and usage of using your command. For example:
 Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
-	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("substitutor called")
-	},
+}
+
+func substitutor(*cobra.Command, []string) {
+
+	log.Debug("Launching substitutor")
+	if err := ui.Init(); err != nil {
+		log.Fatalf("failed to initialize termui: %v", err)
+	}
+	defer ui.Close()
+
+	p := widgets.NewParagraph()
+	p.Text = "Hello World!"
+	p.SetRect(0, 0, 25, 5)
+
+	ui.Render(p)
+
+	for e := range ui.PollEvents() {
+		if e.Type == ui.KeyboardEvent {
+			break
+		}
+	}
 }
 
 func init() {
 	rootCmd.AddCommand(substitutorCmd)
+	substitutorCmd.Run = substitutor
 
 	// Here you will define your flags and configuration settings.
 
