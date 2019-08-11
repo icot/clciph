@@ -9,7 +9,7 @@ import (
 )
 
 type Analysis struct {
-	Cyphertext string
+	Ciphertext string
 	Bytes      []byte
 	Mapping    map[byte]byte
 	Freqs      map[byte]float32
@@ -50,7 +50,7 @@ func getFreqs(bytes []byte) map[byte]float32 {
 
 func Analyze(ciphertext []byte) *Analysis {
 	a := new(Analysis)
-	a.Cyphertext = string(ciphertext)
+	a.Ciphertext = string(ciphertext)
 	a.Bytes = ciphertext
 	a.Mapping = getMapping(a.Bytes)
 	a.Freqs = getFreqs(a.Bytes)

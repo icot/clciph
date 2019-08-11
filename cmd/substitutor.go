@@ -17,11 +17,13 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package cmd
 
 import (
+	"fmt"
 	"time"
 
 	log "github.com/Sirupsen/logrus"
 	ui "github.com/gizak/termui/v3"
 	"github.com/gizak/termui/v3/widgets"
+	"github.com/icot/clciph/analysis"
 	"github.com/spf13/cobra"
 )
 
@@ -37,7 +39,10 @@ This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 }
 
-func substitutor(*cobra.Command, []string) {
+func substitutor(cmd *cobra.Command, args []string) {
+
+	log.Debug("subsittutor called with args: ", args[0])
+	analysis := analysis.AnalyzeFile(args[0])
 
 	log.Debug("Launching substitutor")
 	// UI initialization
@@ -48,23 +53,21 @@ func substitutor(*cobra.Command, []string) {
 
 	// Grid
 	c := widgets.NewParagraph()
-	c.Text = "TestTestTestTest"
+	c.Text = analysis.Ciphertext
 	c.Title = "Ciphertext"
 
 	s := widgets.NewParagraph()
-	s.Text = "TestTestTestTest"
+	s.Text = analysis.Ciphertext
 	s.Title = "Solution"
 
 	m := widgets.NewList()
 	m.Title = "Mapping"
-	m.Rows = []string{
-		"0",
-		"1",
-		"2",
-		"3",
-		"4",
-		"5",
+	m.Rows = make([]string, len(analysis.Mapping))
+	// Iterate over mapping
+	for k, v := range analysis.Mapping {
+		m.Rows = append(m.Rows, fmt.Sprintf("%s: %s", string(k), string(v)))
 	}
+
 	m.TextStyle = ui.NewStyle(ui.ColorYellow)
 
 	grid := ui.NewGrid()
@@ -80,9 +83,8 @@ func substitutor(*cobra.Command, []string) {
 
 	ui.Render(grid)
 
-	tickerCount := 1
 	uiEvents := ui.PollEvents()
-	ticker := time.NewTicker(time.Second).C
+	ticker := time.NewTicker(50 * time.Millisecond).C
 	previousKey := ""
 	for {
 		select {
@@ -110,22 +112,15 @@ func substitutor(*cobra.Command, []string) {
 				m.ScrollTop()
 			case "G", "<End>":
 				m.ScrollBottom()
-			case "e":
-				//updateMapping()
 			}
 
 			if previousKey == "g" {
 				previousKey = ""
 			} else {
 				previousKey = e.ID
-
 			}
 		case <-ticker:
-			if tickerCount == 100 {
-				return
-			}
 			ui.Render(grid)
-			tickerCount++
 		}
 	}
 
