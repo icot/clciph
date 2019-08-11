@@ -47,7 +47,6 @@ func substitutor(*cobra.Command, []string) {
 	defer ui.Close()
 
 	// Grid
-
 	c := widgets.NewParagraph()
 	c.Text = "TestTestTestTest"
 	c.Title = "Ciphertext"
@@ -56,9 +55,17 @@ func substitutor(*cobra.Command, []string) {
 	s.Text = "TestTestTestTest"
 	s.Title = "Solution"
 
-	m := widgets.NewParagraph()
-	m.Text = "TestTestTestTest"
+	m := widgets.NewList()
 	m.Title = "Mapping"
+	m.Rows = []string{
+		"0",
+		"1",
+		"2",
+		"3",
+		"4",
+		"5",
+	}
+	m.TextStyle = ui.NewStyle(ui.ColorYellow)
 
 	grid := ui.NewGrid()
 	termhWidth, termHeight := ui.TerminalDimensions()
@@ -76,17 +83,42 @@ func substitutor(*cobra.Command, []string) {
 	tickerCount := 1
 	uiEvents := ui.PollEvents()
 	ticker := time.NewTicker(time.Second).C
+	previousKey := ""
 	for {
 		select {
 		case e := <-uiEvents:
 			switch e.ID {
 			case "q", "<C-c>":
 				return
-			case "<Resize>":
-				payload := e.Payload.(ui.Resize)
-				grid.SetRect(0, 0, payload.Width, payload.Height)
-				ui.Clear()
-				ui.Render(grid)
+			case "j", "<Down>":
+				m.ScrollDown()
+			case "k", "<Up>":
+				m.ScrollUp()
+			case "<C-d>":
+				m.ScrollHalfPageDown()
+			case "<C-u>":
+				m.ScrollHalfPageUp()
+			case "<C-f>":
+				m.ScrollPageDown()
+			case "<C-b>":
+				m.ScrollPageUp()
+			case "g":
+				if previousKey == "g" {
+					m.ScrollTop()
+				}
+			case "<Home>":
+				m.ScrollTop()
+			case "G", "<End>":
+				m.ScrollBottom()
+			case "e":
+				//updateMapping()
+			}
+
+			if previousKey == "g" {
+				previousKey = ""
+			} else {
+				previousKey = e.ID
+
 			}
 		case <-ticker:
 			if tickerCount == 100 {
