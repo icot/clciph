@@ -3,6 +3,10 @@
 The main objetive of this repository is to contain programmatic tools for solving or
 for helping in the manual resolution of classical ciphers cryptograms.
 
+# Dependencies
+
+    dep ensure -add github.com/gizak/termui/v3
+
 ## Ciphers
 
 What follows is a list of classical ciphers, mostly extracted from 
