@@ -16,11 +16,36 @@ type Analysis struct {
 }
 
 func getMapping(bytes []byte) map[byte]byte {
-	return nil
+	mapping := map[byte]byte{}
+	for _, letter := range bytes {
+		if letter != 0x20 {
+			_, ok := mapping[letter]
+			if !ok {
+				mapping[letter] = letter
+			}
+		}
+	}
+	return mapping
 }
 
 func getFreqs(bytes []byte) map[byte]float32 {
-	return nil
+	table := map[byte]float32{}
+	for _, letter := range bytes {
+		if letter != 0x20 {
+			_, ok := table[letter]
+			if ok {
+				table[letter]++
+			} else {
+				table[letter] = 1
+			}
+		}
+	}
+	// Convert value to percentage
+	for k, v := range table {
+		table[k] = 100 * (v / float32(len(bytes)))
+	}
+
+	return table
 }
 
 func Analyze(ciphertext []byte) *Analysis {

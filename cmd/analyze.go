@@ -17,6 +17,9 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package cmd
 
 import (
+	"encoding/json"
+	"fmt"
+
 	log "github.com/Sirupsen/logrus"
 	"github.com/icot/clciph/analysis"
 	"github.com/icot/clciph/tools/file"
@@ -54,5 +57,6 @@ func analyze(cmd *cobra.Command, args []string) {
 	log.Debug("analyze called with arg: ", args[0])
 	buf := file.Load(args[0])
 	analysis := analysis.Analyze(buf)
-	log.Info(string(analysis.Bytes))
+	buf2, _ := json.Marshal(analysis)
+	fmt.Println(string(buf2))
 }
