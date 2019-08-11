@@ -17,6 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package cmd
 
 import (
+	"time"
+
 	log "github.com/Sirupsen/logrus"
 	ui "github.com/gizak/termui/v3"
 	"github.com/gizak/termui/v3/widgets"
@@ -38,22 +40,63 @@ to quickly create a Cobra application.`,
 func substitutor(*cobra.Command, []string) {
 
 	log.Debug("Launching substitutor")
+	// UI initialization
 	if err := ui.Init(); err != nil {
 		log.Fatalf("failed to initialize termui: %v", err)
 	}
 	defer ui.Close()
 
-	p := widgets.NewParagraph()
-	p.Text = "Hello World!"
-	p.SetRect(0, 0, 25, 5)
+	// Grid
 
-	ui.Render(p)
+	c := widgets.NewParagraph()
+	c.Text = "TestTestTestTest"
+	c.Title = "Ciphertext"
 
-	for e := range ui.PollEvents() {
-		if e.Type == ui.KeyboardEvent {
-			break
+	s := widgets.NewParagraph()
+	s.Text = "TestTestTestTest"
+	s.Title = "Solution"
+
+	m := widgets.NewParagraph()
+	m.Text = "TestTestTestTest"
+	m.Title = "Mapping"
+
+	grid := ui.NewGrid()
+	termhWidth, termHeight := ui.TerminalDimensions()
+	grid.SetRect(0, 0, termhWidth, termHeight)
+	grid.Set(
+		ui.NewCol(1.0/2, m),
+		ui.NewCol(1.0/2,
+			ui.NewRow(1.0/2, c),
+			ui.NewRow(1.0/2, s),
+		),
+	)
+
+	ui.Render(grid)
+
+	tickerCount := 1
+	uiEvents := ui.PollEvents()
+	ticker := time.NewTicker(time.Second).C
+	for {
+		select {
+		case e := <-uiEvents:
+			switch e.ID {
+			case "q", "<C-c>":
+				return
+			case "<Resize>":
+				payload := e.Payload.(ui.Resize)
+				grid.SetRect(0, 0, payload.Width, payload.Height)
+				ui.Clear()
+				ui.Render(grid)
+			}
+		case <-ticker:
+			if tickerCount == 100 {
+				return
+			}
+			ui.Render(grid)
+			tickerCount++
 		}
 	}
+
 }
 
 func init() {
