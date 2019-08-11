@@ -17,10 +17,9 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package cmd
 
 import (
-	"fmt"
-
 	log "github.com/Sirupsen/logrus"
-	"github.com/icot/clciph/tools"
+	"github.com/icot/clciph/analysis"
+	"github.com/icot/clciph/tools/file"
 	"github.com/spf13/cobra"
 )
 
@@ -52,9 +51,8 @@ func init() {
 }
 
 func analyze(cmd *cobra.Command, args []string) {
-	fmt.Println("analyze called with arg: ", args[0])
-	log.Debug("inside analyze")
+	log.Debug("analyze called with arg: ", args[0])
 	buf := file.Load(args[0])
-	log.Debug(string(buf))
-
+	analysis := analysis.Analyze(buf)
+	log.Info(string(analysis.Bytes))
 }
