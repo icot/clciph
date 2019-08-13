@@ -18,110 +18,149 @@ package cmd
 
 import (
 	"fmt"
-	"time"
 
 	log "github.com/Sirupsen/logrus"
-	ui "github.com/gizak/termui/v3"
-	"github.com/gizak/termui/v3/widgets"
 	"github.com/icot/clciph/analysis"
+	"github.com/jroimartin/gocui"
 	"github.com/spf13/cobra"
 )
+
+var solution *analysis.Analysis
 
 // substitutorCmd represents the substitutor command
 var substitutorCmd = &cobra.Command{
 	Use:   "substitutor",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
+	Short: "Launch subsittutor interface",
+	Long:  `Launches substitutor`,
+}
 
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+var (
+	viewArr = []string{"Mapping", "Ciphertext", "Messages", "Solution"}
+	active  = 0
+)
+
+func setCurrentViewOnTop(g *gocui.Gui, name string) (*gocui.View, error) {
+	if _, err := g.SetCurrentView(name); err != nil {
+		return nil, err
+	}
+	return g.SetViewOnTop(name)
+}
+
+func nextView(g *gocui.Gui, v *gocui.View) error {
+	nextIndex := (active + 1) % len(viewArr)
+	name := viewArr[nextIndex]
+
+	out, err := g.View("Messages")
+	if err != nil {
+		return err
+	}
+	fmt.Fprintln(out, "Going from view "+v.Name()+" to "+name)
+
+	if _, err := setCurrentViewOnTop(g, name); err != nil {
+		return err
+	}
+
+	if nextIndex == 0 || nextIndex == 3 {
+		g.Cursor = true
+	} else {
+		g.Cursor = false
+	}
+
+	active = nextIndex
+	return nil
+}
+
+func layout(g *gocui.Gui) error {
+	maxX, maxY := g.Size()
+	if v, err := g.SetView("Mapping", 0, 0, maxX/2-1, maxY/2-1); err != nil {
+		if err != gocui.ErrUnknownView {
+			return err
+		}
+		v.Title = "Mapping (editable)"
+		v.Editable = false
+		v.Wrap = true
+		fmt.Fprint(v, solution.Mapping)
+
+		if _, err = setCurrentViewOnTop(g, "Mapping"); err != nil {
+			return err
+		}
+	}
+
+	if v, err := g.SetView("Ciphertext", maxX/2-1, 0, maxX-1, maxY/2-1); err != nil {
+		if err != gocui.ErrUnknownView {
+			return err
+		}
+		v.Title = "Ciphertext"
+		v.Wrap = true
+		v.Autoscroll = true
+		fmt.Fprint(v, solution.Ciphertext)
+
+	}
+	if v, err := g.SetView("Messages", 0, maxY/2-1, maxX/2-1, maxY-1); err != nil {
+		if err != gocui.ErrUnknownView {
+			return err
+		}
+		v.Title = "Messages"
+		v.Wrap = true
+		v.Autoscroll = true
+		fmt.Fprint(v, "Press TAB to change current view")
+	}
+	if v, err := g.SetView("Solution", maxX/2, maxY/2, maxX-1, maxY-1); err != nil {
+		if err != gocui.ErrUnknownView {
+			return err
+		}
+		v.Title = "Solution (editable)"
+		v.Editable = false
+		fmt.Fprint(v, solution.Ciphertext)
+	}
+	return nil
+}
+
+func quit(g *gocui.Gui, v *gocui.View) error {
+	return gocui.ErrQuit
 }
 
 func substitutor(cmd *cobra.Command, args []string) {
 
 	log.Debug("subsittutor called with args: ", args[0])
-	analysis := analysis.AnalyzeFile(args[0])
+	solution = new(analysis.Analysis)
+	solution = analysis.AnalyzeFile(args[0])
+	log.Debug(solution)
 
 	log.Debug("Launching substitutor")
-	// UI initialization
-	if err := ui.Init(); err != nil {
-		log.Fatalf("failed to initialize termui: %v", err)
+	g, err := gocui.NewGui(gocui.OutputNormal)
+	if err != nil {
+		log.Panicln(err)
 	}
-	defer ui.Close()
+	defer g.Close()
 
-	// Grid
-	c := widgets.NewParagraph()
-	c.Text = analysis.Ciphertext
-	c.Title = "Ciphertext"
+	/*
+		g.Update(func(g *gocui.Gui) error {
+			v, err := g.View("Ciphertext")
+			if err != nil {
+				// handle error
+			}
+			v.Clear()
+			fmt.Fprintln(v, analysis.Ciphertext)
+			return nil
+		})
+	*/
 
-	s := widgets.NewParagraph()
-	s.Text = analysis.Ciphertext
-	s.Title = "Solution"
+	g.Highlight = true
+	g.Cursor = true
+	g.SelFgColor = gocui.ColorGreen
 
-	m := widgets.NewList()
-	m.Title = "Mapping"
-	m.Rows = make([]string, len(analysis.Mapping))
-	// Iterate over mapping
-	for k, v := range analysis.Mapping {
-		m.Rows = append(m.Rows, fmt.Sprintf("%s: %s", string(k), string(v)))
+	g.SetManagerFunc(layout)
+
+	if err := g.SetKeybinding("", gocui.KeyCtrlC, gocui.ModNone, quit); err != nil {
+		log.Panicln(err)
+	}
+	if err := g.SetKeybinding("", gocui.KeyTab, gocui.ModNone, nextView); err != nil {
+		log.Panicln(err)
 	}
 
-	m.TextStyle = ui.NewStyle(ui.ColorYellow)
-
-	grid := ui.NewGrid()
-	termhWidth, termHeight := ui.TerminalDimensions()
-	grid.SetRect(0, 0, termhWidth, termHeight)
-	grid.Set(
-		ui.NewCol(1.0/2, m),
-		ui.NewCol(1.0/2,
-			ui.NewRow(1.0/2, c),
-			ui.NewRow(1.0/2, s),
-		),
-	)
-
-	ui.Render(grid)
-
-	uiEvents := ui.PollEvents()
-	ticker := time.NewTicker(50 * time.Millisecond).C
-	previousKey := ""
-	for {
-		select {
-		case e := <-uiEvents:
-			switch e.ID {
-			case "q", "<C-c>":
-				return
-			case "j", "<Down>":
-				m.ScrollDown()
-			case "k", "<Up>":
-				m.ScrollUp()
-			case "<C-d>":
-				m.ScrollHalfPageDown()
-			case "<C-u>":
-				m.ScrollHalfPageUp()
-			case "<C-f>":
-				m.ScrollPageDown()
-			case "<C-b>":
-				m.ScrollPageUp()
-			case "g":
-				if previousKey == "g" {
-					m.ScrollTop()
-				}
-			case "<Home>":
-				m.ScrollTop()
-			case "G", "<End>":
-				m.ScrollBottom()
-			}
-
-			if previousKey == "g" {
-				previousKey = ""
-			} else {
-				previousKey = e.ID
-			}
-		case <-ticker:
-			ui.Render(grid)
-		}
+	if err := g.MainLoop(); err != nil && err != gocui.ErrQuit {
+		log.Panicln(err)
 	}
 
 }
