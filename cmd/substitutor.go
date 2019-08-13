@@ -18,6 +18,7 @@ package cmd
 
 import (
 	"fmt"
+	"sort"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/icot/clciph/analysis"
@@ -79,7 +80,15 @@ func layout(g *gocui.Gui) error {
 		v.Title = "Mapping (editable)"
 		v.Editable = false
 		v.Wrap = true
-		fmt.Fprint(v, solution.Mapping)
+		// Map display
+		keys := make([]int, 0, len(solution.Mapping))
+		for k := range solution.Mapping {
+			keys = append(keys, int(k))
+		}
+		sort.Slice(keys, func(i int, j int) bool { return keys[i] < keys[j] })
+		for key := range keys {
+			fmt.Fprintln(v, fmt.Sprintf("%c: %s\n", key, string(solution.Mapping[byte(key)])))
+		}
 
 		if _, err = setCurrentViewOnTop(g, "Mapping"); err != nil {
 			return err
