@@ -71,6 +71,23 @@ func nextView(g *gocui.Gui, v *gocui.View) error {
 	return nil
 }
 
+func send_message(g *gocui.Gui, message string) {
+	mesg, _ := g.View("Messages")
+	fmt.Fprintln(mesg, message)
+}
+
+func applyMapping(g *gocui.Gui, v *gocui.View) error {
+	send_message(g, "applyMapping")
+	out, err := g.View("Solution")
+	if err != nil {
+		return err
+	}
+	out.Clear()
+	g.FgColor = gocui.ColorRed
+	fmt.Fprintln(out, solution.Bytes)
+	return nil
+}
+
 func layout(g *gocui.Gui) error {
 	maxX, maxY := g.Size()
 	if v, err := g.SetView("Mapping", 0, 0, maxX/2-1, maxY/2-1); err != nil {
@@ -78,16 +95,16 @@ func layout(g *gocui.Gui) error {
 			return err
 		}
 		v.Title = "Mapping (editable)"
-		v.Editable = false
+		v.Editable = true
 		v.Wrap = true
 		// Map display
-		keys := make([]int, 0, len(solution.Mapping))
-		for k := range solution.Mapping {
-			keys = append(keys, int(k))
+		keys := make([]rune, 0, len(solution.Mapping))
+		for _, key := range solution.Mapping {
+			keys = append(keys, rune(key))
 		}
 		sort.Slice(keys, func(i int, j int) bool { return keys[i] < keys[j] })
-		for key := range keys {
-			fmt.Fprintln(v, fmt.Sprintf("%c: %s\n", key, string(solution.Mapping[byte(key)])))
+		for _, key := range keys {
+			fmt.Fprintln(v, fmt.Sprintf("%v: %v", key, solution.Mapping[byte(key)]))
 		}
 
 		if _, err = setCurrentViewOnTop(g, "Mapping"); err != nil {
@@ -101,7 +118,7 @@ func layout(g *gocui.Gui) error {
 		}
 		v.Title = "Ciphertext"
 		v.Wrap = true
-		v.Autoscroll = true
+		v.Autoscroll = false
 		fmt.Fprint(v, solution.Ciphertext)
 
 	}
@@ -119,7 +136,9 @@ func layout(g *gocui.Gui) error {
 			return err
 		}
 		v.Title = "Solution (editable)"
-		v.Editable = false
+		v.Wrap = true
+		v.Editable = true
+		v.Autoscroll = false
 		fmt.Fprint(v, solution.Ciphertext)
 	}
 	return nil
@@ -161,10 +180,14 @@ func substitutor(cmd *cobra.Command, args []string) {
 
 	g.SetManagerFunc(layout)
 
+	// Key Bindings
 	if err := g.SetKeybinding("", gocui.KeyCtrlC, gocui.ModNone, quit); err != nil {
 		log.Panicln(err)
 	}
 	if err := g.SetKeybinding("", gocui.KeyTab, gocui.ModNone, nextView); err != nil {
+		log.Panicln(err)
+	}
+	if err := g.SetKeybinding("", gocui.KeyF1, gocui.ModNone, applyMapping); err != nil {
 		log.Panicln(err)
 	}
 
