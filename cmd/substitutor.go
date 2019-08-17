@@ -67,17 +67,56 @@ func nextView(g *gocui.Gui, v *gocui.View) error {
 		g.Cursor = false
 	}
 
+	x, y := v.Size()
+	msg := fmt.Sprintf("View: %s, Size X:%v: Y:%v", v.Title, x, y)
+	sendMessage(g, msg)
+
 	active = nextIndex
 	return nil
 }
 
-func send_message(g *gocui.Gui, message string) {
+func scrollDown(g *gocui.Gui, v *gocui.View) error {
+	c, _ := g.View("Ciphertext")
+	x, y := c.Origin()
+	msg := fmt.Sprintf("View: %s, Origin X:%v: Y:%v", c.Title, x, y)
+	sendMessage(g, msg)
+	c.SetOrigin(x, y+1)
+	fmt.Fprint(c, c.ViewBuffer())
+
+	c, _ = g.View("Solution")
+	x, y = c.Origin()
+	msg = fmt.Sprintf("View: %s, Origin X:%v: Y:%v", c.Title, x, y)
+	sendMessage(g, msg)
+	c.SetOrigin(x, y+1)
+	fmt.Fprint(c, c.ViewBuffer())
+
+	return nil
+}
+
+func scrollUp(g *gocui.Gui, v *gocui.View) error {
+	c, _ := g.View("Ciphertext")
+	x, y := c.Origin()
+	msg := fmt.Sprintf("View: %s, Origin X:%v: Y:%v", c.Title, x, y)
+	sendMessage(g, msg)
+	c.SetOrigin(x, y-1)
+	fmt.Fprint(c, c.ViewBuffer())
+
+	c, _ = g.View("Solution")
+	x, y = c.Origin()
+	msg = fmt.Sprintf("View: %s, Origin X:%v: Y:%v", c.Title, x, y)
+	sendMessage(g, msg)
+	c.SetOrigin(x, y-1)
+	fmt.Fprint(c, c.ViewBuffer())
+	return nil
+}
+
+func sendMessage(g *gocui.Gui, message string) {
 	mesg, _ := g.View("Messages")
 	fmt.Fprintln(mesg, message)
 }
 
 func applyMapping(g *gocui.Gui, v *gocui.View) error {
-	send_message(g, "applyMapping")
+	sendMessage(g, "applyMapping")
 	out, err := g.View("Solution")
 	if err != nil {
 		return err
@@ -94,7 +133,7 @@ func layout(g *gocui.Gui) error {
 		if err != gocui.ErrUnknownView {
 			return err
 		}
-		v.Title = "Mapping (editable)"
+		v.Title = "Mapping"
 		v.Editable = true
 		v.Wrap = true
 		// Map display
@@ -135,7 +174,7 @@ func layout(g *gocui.Gui) error {
 		if err != gocui.ErrUnknownView {
 			return err
 		}
-		v.Title = "Solution (editable)"
+		v.Title = ""
 		v.Wrap = true
 		v.Editable = true
 		v.Autoscroll = false
@@ -190,7 +229,12 @@ func substitutor(cmd *cobra.Command, args []string) {
 	if err := g.SetKeybinding("", gocui.KeyF1, gocui.ModNone, applyMapping); err != nil {
 		log.Panicln(err)
 	}
-
+	if err := g.SetKeybinding("", gocui.KeyArrowDown, gocui.ModNone, scrollDown); err != nil {
+		log.Panicln(err)
+	}
+	if err := g.SetKeybinding("", gocui.KeyArrowUp, gocui.ModNone, scrollUp); err != nil {
+		log.Panicln(err)
+	}
 	if err := g.MainLoop(); err != nil && err != gocui.ErrQuit {
 		log.Panicln(err)
 	}
