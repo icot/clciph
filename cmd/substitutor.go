@@ -168,13 +168,15 @@ func layout(g *gocui.Gui) error {
 		v.Title = "Messages"
 		v.Wrap = true
 		v.Autoscroll = true
-		fmt.Fprint(v, "Press TAB to change current view")
+		mx, my := g.Size()
+		fmt.Fprintln(v, fmt.Sprintf("Max X,Y (%d, %d)", mx, my))
+		fmt.Fprintln(v, "Press TAB to change current view")
 	}
-	if v, err := g.SetView("Solution", maxX/2, maxY/2, maxX-1, maxY-1); err != nil {
+	if v, err := g.SetView("Solution", maxX/2-1, maxY/2-1, maxX-1, maxY-1); err != nil {
 		if err != gocui.ErrUnknownView {
 			return err
 		}
-		v.Title = ""
+		v.Title = "Solution"
 		v.Wrap = true
 		v.Editable = true
 		v.Autoscroll = false
